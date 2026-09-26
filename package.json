@@ -1,0 +1,28 @@
+{
+  "name": "firstmate-routing-eval",
+  "version": "1.0.0",
+  "description": "Private evaluation repository for testing Firstmate multi-agent routing, parallel dispatch, model specialization, cross-model review, and provider capacity.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xmitesh/firstmate-routing-eval.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/0xmitesh/firstmate-routing-eval/issues"
+  },
+  "homepage": "https://github.com/0xmitesh/firstmate-routing-eval#readme",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}
