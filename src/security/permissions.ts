@@ -6,6 +6,13 @@ export type Action =
   | "inventory:reserve"
   | "admin:manage";
 
+const actions: readonly Action[] = [
+  "catalog:read",
+  "catalog:write",
+  "inventory:reserve",
+  "admin:manage",
+];
+
 export function can(user: User, action: Action): boolean {
   if (user.role === "admin") {
     return true;
@@ -16,4 +23,8 @@ export function can(user: User, action: Action): boolean {
   }
 
   return action === "catalog:read";
+}
+
+export function allowedActions(user: User): Action[] {
+  return actions.filter((action) => can(user, action));
 }
