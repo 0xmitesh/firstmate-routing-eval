@@ -4,9 +4,15 @@ export type Reservation = {
   quantity: number;
 };
 
+export type ReservationState = "active" | "committed" | "released";
+
+export type ReservationRecord = Reservation & {
+  state: ReservationState;
+};
+
 export class Inventory {
   private stock = new Map<string, number>();
-  private reservations = new Map<string, Reservation>();
+  private reservations = new Map<string, ReservationRecord>();
 
   setStock(sku: string, quantity: number): void {
     if (!Number.isInteger(quantity) || quantity < 0) {
@@ -35,26 +41,52 @@ export class Inventory {
       throw new Error("Insufficient stock");
     }
 
-    this.stock.set(
-      reservation.sku,
-      available - reservation.quantity,
-    );
+    this.stock.set(reservation.sku, available - reservation.quantity);
+    this.reservations.set(reservation.id, { ...reservation, state: "active" });
+  }
 
-    this.reservations.set(reservation.id, reservation);
+  getReservation(reservationId: string): ReservationRecord | undefined {
+    const reservation = this.reservations.get(reservationId);
+    return reservation ? { ...reservation } : undefined;
   }
 
   release(reservationId: string): void {
     const reservation = this.reservations.get(reservationId);
 
+    // Keep the original no-op behavior for unknown reservation IDs.
     if (!reservation) {
       return;
+    }
+
+    if (reservation.state === "released") {
+      return;
+    }
+
+    if (reservation.state === "committed") {
+      throw new Error("Cannot release a committed reservation");
     }
 
     this.stock.set(
       reservation.sku,
       this.available(reservation.sku) + reservation.quantity,
     );
+    reservation.state = "released";
+  }
 
-    this.reservations.delete(reservationId);
+  commit(reservationId: string): void {
+    const reservation = this.reservations.get(reservationId);
+
+    if (!reservation) {
+      throw new Error(`Cannot commit unknown reservation: ${reservationId}`);
+    }
+
+    if (reservation.state !== "active") {
+      throw new Error(
+        `Cannot commit reservation in ${reservation.state} state`,
+      );
+    }
+
+    // The stock was deducted on reserve; committing only makes that deduction permanent.
+    reservation.state = "committed";
   }
 }
