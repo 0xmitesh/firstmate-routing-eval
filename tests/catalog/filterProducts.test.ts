@@ -53,6 +53,108 @@ describe("filterProducts", () => {
     ).toEqual(["p1"]);
   });
 
+  it("matches product names case-insensitively", () => {
+    expect(filterProducts(products, { q: "mIrRoR" }).map((p) => p.id)).toEqual([
+      "p1",
+      "p2",
+    ]);
+  });
+
+  it("trims whitespace around the query", () => {
+    expect(filterProducts(products, { q: "  One  " }).map((p) => p.id)).toEqual([
+      "p1",
+    ]);
+  });
+
+  it("treats an empty or whitespace-only query as no query", () => {
+    const activeIds = ["p1", "p2", "p3"];
+    expect(filterProducts(products, { q: "" }).map((p) => p.id)).toEqual(
+      activeIds,
+    );
+    expect(filterProducts(products, { q: " \t\n " }).map((p) => p.id)).toEqual(
+      activeIds,
+    );
+  });
+
+  it("combines query, existing filters, and sorting", () => {
+    const combinedProducts = [
+      ...products,
+      {
+        ...products[1],
+        id: "p5",
+        name: "Mirror Three",
+        priceCents: 15000,
+        stock: 1,
+      },
+    ];
+
+    expect(
+      filterProducts(combinedProducts, {
+        q: "  MIRROR ",
+        category: "mirror",
+        minPriceCents: 10000,
+        maxPriceCents: 25000,
+        inStockOnly: true,
+        sort: "price-desc",
+      }).map((p) => p.id),
+    ).toEqual(["p5", "p1"]);
+  });
+
+  it("sorts by price or name and breaks ties by id", () => {
+    const tiedProducts: Product[] = [
+      {
+        id: "z",
+        name: "Mug",
+        category: "kitchen",
+        priceCents: 100,
+        stock: 1,
+        active: true,
+      },
+      {
+        id: "a",
+        name: "Plate",
+        category: "kitchen",
+        priceCents: 100,
+        stock: 1,
+        active: true,
+      },
+      {
+        id: "b",
+        name: "Mug",
+        category: "kitchen",
+        priceCents: 200,
+        stock: 1,
+        active: true,
+      },
+      {
+        id: "c",
+        name: "Plate",
+        category: "kitchen",
+        priceCents: 200,
+        stock: 1,
+        active: true,
+      },
+    ];
+
+    expect(filterProducts(tiedProducts, { sort: "price-asc" }).map((p) => p.id))
+      .toEqual(["a", "z", "b", "c"]);
+    expect(filterProducts(tiedProducts, { sort: "price-desc" }).map((p) => p.id))
+      .toEqual(["b", "c", "a", "z"]);
+    expect(filterProducts(tiedProducts, { sort: "name-asc" }).map((p) => p.id))
+      .toEqual(["b", "z", "a", "c"]);
+  });
+
+  it("does not mutate the input array when sorting", () => {
+    const input = [...products];
+    const originalOrder = input.map((p) => p.id);
+
+    const sorted = filterProducts(input, { sort: "price-asc" });
+
+    expect(sorted).not.toBe(input);
+    expect(input.map((p) => p.id)).toEqual(originalOrder);
+    expect(sorted.map((p) => p.id)).toEqual(["p3", "p1", "p2"]);
+  });
+
   it("can exclude out-of-stock products", () => {
     expect(
       filterProducts(products, {
